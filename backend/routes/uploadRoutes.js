@@ -1,10 +1,12 @@
 import express from "express";
 import multer from "multer";
+import axios from "axios";
+import fs from "fs";
 
 const router = express.Router();
 
 
-// Storage Configuration
+// Multer Storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -15,44 +17,66 @@ const storage = multer.diskStorage({
   },
 });
 
-
-// File Filter
-const fileFilter = (req, file, cb) => {
-  if (
-    file.mimetype === "audio/mpeg" ||
-    file.mimetype === "audio/wav" ||
-    file.mimetype === "audio/mp3"
-  ) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only audio files are allowed"), false);
-  }
-};
+const upload = multer({ storage });
 
 
-// Multer Setup
-const upload = multer({
-  storage,
-  fileFilter,
-});
-
-
-// Upload API
+// Upload + Speech To Text Route
 router.post(
   "/upload",
   upload.single("audio"),
-  (req, res) => {
+  async (req, res) => {
 
-    if (!req.file) {
-      return res.status(400).json({
-        message: "No file uploaded",
+    try {
+
+      if (!req.file) {
+        return res.status(400).json({
+          message: "No audio file uploaded",
+        });
+      }
+      console.log(req.file);
+
+      // Read Audio File
+      const audioData = fs.readFileSync(req.file.path);
+
+      // Upload Audio To AssemblyAI
+      const uploadResponse = await axios.post(
+        "https://api.assemblyai.com/v2/upload",
+        audioData,
+        {
+          headers: {
+            authorization: process.env.ASSEMBLY_API_KEY,
+            "content-type": "application/octet-stream",
+          },
+        }
+      );
+
+      // Start Transcription
+      const transcriptResponse = await axios.post(
+        "https://api.assemblyai.com/v2/transcript",
+        {
+          audio_url: uploadResponse.data.upload_url,
+        },
+        {
+          headers: {
+            authorization: process.env.ASSEMBLY_API_KEY,
+            "content-type": "application/json",
+          },
+        }
+      );
+
+      res.status(200).json({
+        message: "Audio uploaded successfully",
+        transcriptId: transcriptResponse.data.id,
+      });
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+        message: "Error processing audio",
       });
     }
-
-    res.status(200).json({
-      message: "Audio uploaded successfully",
-      file: req.file,
-    });
   }
 );
 
