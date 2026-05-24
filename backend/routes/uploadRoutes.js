@@ -28,11 +28,13 @@ router.post(
 
     try {
 
+      // Check File
       if (!req.file) {
         return res.status(400).json({
           message: "No audio file uploaded",
         });
       }
+
       console.log(req.file);
 
       // Read Audio File
@@ -55,6 +57,8 @@ router.post(
         "https://api.assemblyai.com/v2/transcript",
         {
           audio_url: uploadResponse.data.upload_url,
+
+          speech_models: ["universal-2"],
         },
         {
           headers: {
@@ -64,9 +68,46 @@ router.post(
         }
       );
 
+      // Transcript ID
+      const transcriptId = transcriptResponse.data.id;
+
+      let transcriptResult;
+
+      // Polling Until Completed
+      while (true) {
+
+        transcriptResult = await axios.get(
+          `https://api.assemblyai.com/v2/transcript/${transcriptId}`,
+          {
+            headers: {
+              authorization: process.env.ASSEMBLY_API_KEY,
+            },
+          }
+        );
+
+        console.log(transcriptResult.data.status);
+
+        // If Completed
+        if (transcriptResult.data.status === "completed") {
+          break;
+        }
+
+        // If Error
+        if (transcriptResult.data.status === "error") {
+          throw new Error("Transcription failed");
+        }
+
+        // Wait 3 Seconds
+        await new Promise((resolve) =>
+          setTimeout(resolve, 3000)
+        );
+      }
+console.log(transcriptResult.data.text);
+      // Final Response
       res.status(200).json({
-        message: "Audio uploaded successfully",
-        transcriptId: transcriptResponse.data.id,
+        message: "Transcription completed",
+
+        text: transcriptResult.data.text,
       });
 
     } catch (error) {
