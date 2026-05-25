@@ -1,4 +1,4 @@
-
+import AudioUpload from "./component/AudioUpload";
 
 function App() {
 
@@ -12,7 +12,7 @@ function App() {
 
       <h1>Speech To Text App</h1>
 
-      
+      <AudioUpload />
 
     </div>
   );
