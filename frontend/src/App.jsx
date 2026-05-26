@@ -1,5 +1,5 @@
 import AudioUpload from "./component/AudioUpload";
-
+import History from "./component/History";
 function App() {
 
   return (
@@ -13,7 +13,7 @@ function App() {
       <h1>Speech To Text App</h1>
 
       <AudioUpload />
-
+      <History />
     </div>
   );
 }
