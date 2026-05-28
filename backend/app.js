@@ -10,6 +10,7 @@ app.use(express.json());
 
 app.use("/api", uploadRoutes);
 
+
 app.get("/", (req, res) => {
   res.send("Backend Running Successfully");
 });
