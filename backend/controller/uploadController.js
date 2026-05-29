@@ -3,15 +3,43 @@ import fs from "fs";
 
 import Audio from "../models/audioModel.js";
 
-
 export const uploadAudio = async (req, res) => {
-
   try {
-
     // Check File
     if (!req.file) {
       return res.status(400).json({
+        success: false,
+
         message: "No audio file uploaded",
+      });
+    }
+
+    // Allowed Audio Types
+    const allowedTypes = [
+      "audio/mpeg",
+      "audio/mp3",
+      "audio/wav",
+      "audio/ogg",
+      "audio/webm",
+    ];
+
+    // File Type Validation
+    if (!allowedTypes.includes(req.file.mimetype)) {
+      return res.status(400).json({
+        success: false,
+
+        message: "Invalid audio format",
+      });
+    }
+
+    // File Size Validation
+    const maxSize = 10 * 1024 * 1024;
+
+    if (req.file.size > maxSize) {
+      return res.status(400).json({
+        success: false,
+
+        message: "File size exceeds 10MB",
       });
     }
 
@@ -23,29 +51,35 @@ export const uploadAudio = async (req, res) => {
     // Upload Audio To AssemblyAI
     const uploadResponse = await axios.post(
       "https://api.assemblyai.com/v2/upload",
+
       audioData,
+
       {
         headers: {
           authorization: process.env.ASSEMBLY_API_KEY,
+
           "content-type": "application/octet-stream",
         },
-      }
+      },
     );
 
     // Start Transcription
     const transcriptResponse = await axios.post(
       "https://api.assemblyai.com/v2/transcript",
+
       {
         audio_url: uploadResponse.data.upload_url,
 
-        speech_models: ["universal-2"],
+        speech_model: "universal",
       },
+
       {
         headers: {
           authorization: process.env.ASSEMBLY_API_KEY,
+
           "content-type": "application/json",
         },
-      }
+      },
     );
 
     // Transcript ID
@@ -55,14 +89,14 @@ export const uploadAudio = async (req, res) => {
 
     // Polling
     while (true) {
-
       transcriptResult = await axios.get(
         `https://api.assemblyai.com/v2/transcript/${transcriptId}`,
+
         {
           headers: {
             authorization: process.env.ASSEMBLY_API_KEY,
           },
-        }
+        },
       );
 
       console.log(transcriptResult.data.status);
@@ -78,37 +112,45 @@ export const uploadAudio = async (req, res) => {
       }
 
       // Wait 3 Seconds
-      await new Promise((resolve) =>
-        setTimeout(resolve, 3000)
-      );
+      await new Promise((resolve) => setTimeout(resolve, 3000));
     }
 
     console.log(transcriptResult.data.text);
 
     // Save To MongoDB
     await Audio.create({
+      filename: req.file.originalname,
 
-  filename: req.file.originalname,
+      filepath: req.file.path,
 
-  filepath: req.file.path,
-
-  transcriptText: transcriptResult.data.text,
-
-});
+      transcriptText: transcriptResult.data.text,
+    });
 
     // Final Response
     res.status(200).json({
-      message: "Transcription completed",
+      success: true,
+
+      message: "Transcription completed successfully",
 
       text: transcriptResult.data.text,
     });
-
   } catch (error) {
-
     console.log(error);
 
+    // AssemblyAI Error
+    if (error.response) {
+      return res.status(500).json({
+        success: false,
+
+        message: error.response.data?.error || "AssemblyAI API Error",
+      });
+    }
+
+    // General Error
     res.status(500).json({
-      message: "Error processing audio",
+      success: false,
+
+      message: error.message || "Error processing audio",
     });
   }
 };
