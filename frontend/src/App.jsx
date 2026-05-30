@@ -5,8 +5,7 @@ import { supabase }
 from "./config/supabase";
 
 import AudioUpload
-from "./component/AudioUpload";
-
+from "./component/audioUpload";
 import History
 from "./component/History";
 
