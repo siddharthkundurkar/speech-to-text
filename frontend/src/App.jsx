@@ -1,3 +1,9 @@
+import { useEffect, useState }
+from "react";
+
+import { supabase }
+from "./config/supabase";
+
 import AudioUpload
 from "./component/AudioUpload";
 
@@ -10,12 +16,102 @@ from "./Navbar";
 import LiveSpeech
 from "./component/LiveSpeech";
 
+import Auth
+from "./pages/Auth";
+
 
 function App() {
+
+  const [session, setSession] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+
+  // Session
+  useEffect(() => {
+
+    // Current Session
+    supabase.auth
+      .getSession()
+
+      .then(({ data }) => {
+
+        setSession(
+          data.session
+        );
+
+        setLoading(false);
+      });
+
+    // Listen Auth Changes
+    const {
+
+      data: listener,
+
+    } = supabase.auth
+      .onAuthStateChange(
+
+        (_event, session) => {
+
+          setSession(session);
+        }
+      );
+
+    return () => {
+
+      listener.subscription
+        .unsubscribe();
+    };
+
+  }, []);
+
+
+  // Loading
+  if (loading) {
+
+    return (
+
+      <div
+        className="
+          min-h-screen
+          bg-black
+          flex
+          items-center
+          justify-center
+          text-white
+          text-3xl
+          font-bold
+        "
+      >
+
+        Loading...
+
+      </div>
+    );
+  }
+
+
+  // Not Logged In
+  if (!session) {
+
+    return <Auth />;
+  }
+
+
+  // Logout
+  const handleLogout = async () => {
+
+    await supabase.auth
+      .signOut();
+  };
+
 
   return (
 
     <div
+    id = "top"
       className="
         min-h-screen
         bg-[#07070A]
@@ -37,10 +133,19 @@ function App() {
       />
 
       {/* Navbar */}
-      <Navbar />
+      <Navbar
+        handleLogout={
+          handleLogout
+        }
+
+        userEmail={
+          session.user.email
+        }
+      />
 
       {/* Hero Section */}
       <section
+       
         className="
           pt-28
           pb-24
@@ -129,11 +234,16 @@ function App() {
               "
             >
 
-              Upload audio files or use live
-              microphone transcription with
-              a futuristic AI-powered speech
-              recognition platform built using
-              React, Express, MongoDB and AI APIs.
+              Welcome back
+
+              <span className="text-fuchsia-400">
+
+                {" "}
+                {
+                  session.user.email
+                }
+
+              </span>
 
             </p>
 
@@ -146,7 +256,6 @@ function App() {
               "
             >
 
-              {/* Primary */}
               <button
                 className="
                   px-8
@@ -169,31 +278,6 @@ function App() {
               >
 
                 🚀 Start Transcribing
-
-              </button>
-
-              {/* Secondary */}
-              <button
-                className="
-                  px-8
-                  py-4
-                  rounded-2xl
-
-                  border
-                  border-white/10
-
-                  bg-white/5
-                  hover:bg-white/10
-
-                  transition-all
-                  duration-300
-
-                  font-semibold
-                  backdrop-blur-lg
-                "
-              >
-
-                📜 View History
 
               </button>
 
@@ -254,8 +338,9 @@ function App() {
 
       </section>
 
-      {/* Upload Section */}
+      {/* Upload */}
       <section
+        id="Upload"
         className="
           px-6
           pb-24
@@ -269,40 +354,6 @@ function App() {
           "
         >
 
-          {/* Heading */}
-          <div
-            className="
-              text-center
-              mb-14
-            "
-          >
-
-            <h2
-              className="
-                text-4xl
-                font-bold
-                mb-4
-              "
-            >
-
-              🎵 Upload Audio Files
-
-            </h2>
-
-            <p
-              className="
-                text-gray-400
-                text-lg
-              "
-            >
-
-              AI transcription for uploaded audio files
-
-            </p>
-
-          </div>
-
-          {/* Upload Component */}
           <div
             className="
               bg-white/5
@@ -311,7 +362,6 @@ function App() {
               rounded-3xl
               p-8
               backdrop-blur-xl
-              shadow-xl
             "
           >
 
@@ -323,8 +373,9 @@ function App() {
 
       </section>
 
-      {/* History Section */}
+      {/* History */}
       <section
+        id="history"
         className="
           px-6
           pb-24
@@ -340,25 +391,12 @@ function App() {
 
           <div
             className="
-              text-center
-              mb-14
-            "
-          >
-
-         
-
-          </div>
-
-          {/* History Card */}
-          <div
-            className="
               bg-white/5
               border
               border-white/10
               rounded-3xl
               p-8
               backdrop-blur-xl
-              shadow-xl
             "
           >
 

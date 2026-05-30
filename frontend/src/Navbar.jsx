@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-function Navbar() {
+function Navbar({
+  handleLogout,
+
+  userEmail,
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const [darkMode, setDarkMode] = useState(() => {
@@ -93,7 +97,7 @@ function Navbar() {
             "
           >
             <a
-              href="/"
+              href="/#top"
               className="
                 text-gray-300
                 hover:text-fuchsia-400
@@ -105,7 +109,7 @@ function Navbar() {
             </a>
 
             <a
-              href="#AudioUpload"
+              href="#Upload"
               className="
                 text-gray-300
                 hover:text-fuchsia-400
@@ -138,6 +142,25 @@ function Navbar() {
               gap-4
             "
           >
+            {/* Email */}
+            <div
+              className="
+                px-4
+                py-2
+
+                rounded-2xl
+
+                bg-white/5
+                border
+                border-white/10
+
+                text-sm
+                text-gray-300
+              "
+            >
+              {userEmail}
+            </div>
+
             {/* Theme Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
@@ -165,8 +188,9 @@ function Navbar() {
               {darkMode ? "☀️" : "🌙"}
             </button>
 
-            {/* Login Button */}
+            {/* Logout */}
             <button
+              onClick={handleLogout}
               className="
                 px-6
                 py-3
@@ -188,7 +212,7 @@ function Navbar() {
                 duration-300
               "
             >
-              Login
+              Logout
             </button>
           </div>
 
@@ -263,6 +287,27 @@ function Navbar() {
                 gap-5
               "
           >
+            {/* Email */}
+            <div
+              className="
+                  px-4
+                  py-3
+
+                  rounded-2xl
+
+                  bg-white/5
+                  border
+                  border-white/10
+
+                  text-sm
+                  text-gray-300
+
+                  break-all
+                "
+            >
+              {userEmail}
+            </div>
+
             <a
               href="/"
               className="
@@ -293,7 +338,9 @@ function Navbar() {
               History
             </a>
 
+            {/* Logout */}
             <button
+              onClick={handleLogout}
               className="
                   mt-3
                   px-5
@@ -309,7 +356,7 @@ function Navbar() {
                   font-semibold
                 "
             >
-              Login
+              Logout
             </button>
           </div>
         </div>
